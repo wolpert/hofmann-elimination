@@ -15,8 +15,8 @@ public class RoundTripTest {
   @Test
   void testRoundTrip() {
     Server server = new ServerImpl();
-    Client alice = new ClientImpl("alice");
-    Client bob = new ClientImpl("bob");
+    Client alice = new Client("alice");
+    Client bob = new Client("bob");
     ClientKey aliceKey = alice.generateClientKey(server);
     ClientKey bobKey = bob.generateClientKey(server);
 
@@ -36,7 +36,7 @@ public class RoundTripTest {
   void testDifferentServersHaveDifferentResults() {
     Server server1 = new ServerImpl();
     Server server2 = new ServerImpl();
-    Client alice = new ClientImpl("alice");
+    Client alice = new Client("alice");
     ClientKey aliceKey1 = alice.generateClientKey(server1);
     ClientKey aliceKey2 = alice.generateClientKey(server2);
 

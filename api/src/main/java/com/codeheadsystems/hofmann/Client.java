@@ -10,10 +10,16 @@ import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import org.bouncycastle.math.ec.ECPoint;
 
-public interface Client {
+public class Client {
 
-  default ClientKey generateClientKey(final Server server) {
-    return server.generateClientKey(customerId());
+  private final String customerId;
+
+  public Client(final String customerId) {
+    this.customerId = customerId;
+  }
+
+  public ClientKey generateClientKey(final Server server) {
+    return server.generateClientKey(customerId);
   }
 
   /**
@@ -24,9 +30,9 @@ public interface Client {
    * @param sensitiveData The sensitive data that we want to convert into a key for elimination.
    * @return an identity key that represents the original sensitive data after processing through the elimination protocol.
    */
-  default String covertToIdentityKey(final Server server,
-                                     final ClientKey clientKey,
-                                     final String sensitiveData) {
+  public String covertToIdentityKey(final Server server,
+                                    final ClientKey clientKey,
+                                    final String sensitiveData) {
     // Generate our request-unique data. This is for debug tracking
     final String requestId = UUID.randomUUID().toString();
     // We generate a random blinding factor, which is a random scalar value mod to the points on the curve.
@@ -71,7 +77,7 @@ public interface Client {
    * @return The original ECPoint that resulted from the server processing, without revealing any information about the
    * original data to the server.
    */
-  default ECPoint unblindEcPointFromHex(final String hex, final BigInteger blindingFactor) {
+  private ECPoint unblindEcPointFromHex(final String hex, final BigInteger blindingFactor) {
     // Convert the response back to an ECPoint and unblind it using the inverse of the blinding factor. This step
     // retrieves the original point that resulted from the server processed, without revealing any information about
     // the original data to the server.
@@ -89,7 +95,7 @@ public interface Client {
    * @param clientKeyScalar The client key scalar needed for the blinding process.
    * @return A hex-encoded string representation of the blinded EC point, which can be sent to the server for processing.
    */
-  default String blindEcPointToHex(final ECPoint hashedData, final BigInteger blindingFactor, final BigInteger clientKeyScalar) {
+  private String blindEcPointToHex(final ECPoint hashedData, final BigInteger blindingFactor, final BigInteger clientKeyScalar) {
     // This blinding factor is used to blind the hashed data point before sending it to the server. The blinding process
     // ensures that the server cannot learn anything about the original data or the hashed point, as it only sees a
     // blinded version of the point.
@@ -100,17 +106,27 @@ public interface Client {
     return ECPOINT_TO_HEX(blindedPoint);
   }
 
-  String customerId();
-
   /**
    * Maps the hashed bytes to a point on the elliptic curve. This is done using a deterministic method that ensures the
    * same input bytes will always produce the same curve point. The curve we use is secp256k1, which is widely used in
    * cryptographic applications. The mapping should ensure that the resulting point is valid and lies on the curve.
+   * <ol>
+   * <li> Converts the hash to a scalar in the valid range [1, n-1] using modular arithmetic</li>
+   * <li> Multiplies the generator point G by the scalar to produce a deterministic point on the curve</li>
+   * <li> Normalizes the point for consistent representation</li>
+   * </ol>
    *
-   * @param sensitiveBytes The input bytes that have been hashed and need to be mapped to a curve point.
+   * @param hash The input bytes that have been hashed and need to be mapped to a curve point.
    * @return An ECPoint representing the hashed data on the elliptic curve, which can be used in subsequent
    * cryptographic operations.
    */
-  ECPoint hashToCurve(byte[] sensitiveBytes);
+  private ECPoint hashToCurve(byte[] hash) {
+    BigInteger scalar = new BigInteger(1, hash)
+        .mod(Curve.DEFAULT_CURVE.getN().subtract(BigInteger.ONE))
+        .add(BigInteger.ONE);
+
+    // Multiply the generator point by the scalar to get a point on the curve
+    return Curve.DEFAULT_CURVE.getG().multiply(scalar).normalize();
+  }
 
 }
