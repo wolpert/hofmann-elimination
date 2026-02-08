@@ -38,6 +38,14 @@ Client                           Service
 4. The client receives `R` and unblinds it by multiplying with the inverse of the blinding factor `r`, yielding `U = s·P`.
 5. Finally, the client can derive a consistent identity key from `U` using the hash function BLAKE3.
 
+## Useful classes
+
+- `Client` : Shows in detail what the client is doing for the protocol.
+- `Server` : The API requirements for a basic system to allow for clients to create new keys.
+- `ServerImpl` : Naive implementation that implements the protocol in a basic way.
+- `Curve` : Default behavior needed from any Curve implementation. Uses Bouncy Castle as that should be C# compatible.
+- `RoundTripTest` : Examples of how it works and to verify the code is sound.
+
 # References
 
 ## OPRF

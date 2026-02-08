@@ -25,11 +25,11 @@ public class RoundTripTest {
     String aliceHash2 = alice.covertToIdentityKey(server, aliceKey, TEST_DATA2);
     String bobHash2 = bob.covertToIdentityKey(server, bobKey, TEST_DATA2);
 
+    assertThat(aliceHash).isEqualTo(bobHash)
+        .isNotEqualTo(aliceHash2).isNotEqualTo(bobHash2);
+    assertThat(aliceHash2).isEqualTo(bobHash2)
+        .isNotEqualTo(aliceHash).isNotEqualTo(bobHash);
 
-    assertThat(aliceHash).isEqualTo(bobHash);
-    assertThat(aliceHash2).isEqualTo(bobHash2);
-
-    assertThat(aliceHash2).isNotEqualTo(bobHash);
   }
 
   @Test

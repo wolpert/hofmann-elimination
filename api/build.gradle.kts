@@ -12,12 +12,15 @@ repositories {
 dependencies {
 
     implementation(libs.bundles.core)
+    testImplementation(libs.bundles.test)
 
-    testImplementation(platform("org.junit:junit-bom:6.0.2"))
-    testImplementation("org.junit.jupiter:junit-jupiter")
+    testImplementation(libs.bundles.test)
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
-tasks.test {
-    useJUnitPlatform()
+// Apply a specific Java toolchain to ease working on different environments.
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
 }
