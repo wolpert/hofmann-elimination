@@ -3,7 +3,6 @@ package com.codeheadsystems.hofmann.impl;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.codeheadsystems.hofmann.Client;
-import com.codeheadsystems.hofmann.ClientKey;
 import com.codeheadsystems.hofmann.Server;
 import org.junit.jupiter.api.Test;
 
@@ -15,15 +14,13 @@ public class RoundTripTest {
   @Test
   void testRoundTrip() {
     Server server = new ServerImpl();
-    Client alice = new Client("alice");
-    Client bob = new Client("bob");
-    ClientKey aliceKey = alice.generateClientKey(server);
-    ClientKey bobKey = bob.generateClientKey(server);
+    Client alice = new Client();
+    Client bob = new Client();
 
-    String aliceHash = alice.covertToIdentityKey(server, aliceKey, TEST_DATA);
-    String bobHash = bob.covertToIdentityKey(server, bobKey, TEST_DATA);
-    String aliceHash2 = alice.covertToIdentityKey(server, aliceKey, TEST_DATA2);
-    String bobHash2 = bob.covertToIdentityKey(server, bobKey, TEST_DATA2);
+    String aliceHash = alice.covertToIdentityKey(server, TEST_DATA);
+    String bobHash = bob.covertToIdentityKey(server, TEST_DATA);
+    String aliceHash2 = alice.covertToIdentityKey(server, TEST_DATA2);
+    String bobHash2 = bob.covertToIdentityKey(server, TEST_DATA2);
 
     assertThat(aliceHash).isEqualTo(bobHash)
         .isNotEqualTo(aliceHash2).isNotEqualTo(bobHash2);
@@ -36,12 +33,10 @@ public class RoundTripTest {
   void testDifferentServersHaveDifferentResults() {
     Server server1 = new ServerImpl();
     Server server2 = new ServerImpl();
-    Client alice = new Client("alice");
-    ClientKey aliceKey1 = alice.generateClientKey(server1);
-    ClientKey aliceKey2 = alice.generateClientKey(server2);
+    Client alice = new Client();
 
-    String hash1 = alice.covertToIdentityKey(server1, aliceKey1, TEST_DATA);
-    String hash2 = alice.covertToIdentityKey(server2, aliceKey2, TEST_DATA);
+    String hash1 = alice.covertToIdentityKey(server1, TEST_DATA);
+    String hash2 = alice.covertToIdentityKey(server2, TEST_DATA);
 
     assertThat(hash1).isNotEqualTo(hash2);
   }

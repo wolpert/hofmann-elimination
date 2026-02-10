@@ -13,12 +13,4 @@ public interface Server {
    */
   EliminationResponse process(EliminationRequest eliminationRequest);
 
-  /**
-   * Generates a client key that contains the client's unique identifier and the scalar value used in the blinding process.
-   * The server will store this later for the elimination process.
-   * @param clientIdentifier A unique identifier for the client, which can be used to track and manage client keys.
-   * @return A reusable ClientKey record that contains the client's unique identifier and the scalar value used in the blinding process.
-   */
-  ClientKey generateClientKey(String clientIdentifier);
-
 }

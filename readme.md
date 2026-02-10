@@ -7,24 +7,18 @@ reusable identifiers across multiple clients without sharing the
 key data used to make up that identifier. This results in an identifier that can
 be used with services without those services knowing the origins of the data used.
 Useful when that data is based on information one does not want to expose
-outside of the owning client. This is an OPRF-inspired (Oblivious Pseudorandom Function)
-custom protocol that uses hash-to-curve techniques to achieve this goal.
-
-This protocol extends standard OPRF by incorporating client-specific keys (kᵢ) to limit
-the ability of the service to compute the same blinded point for different clients. This
-allows multiple clients to use the same input text and get the same output, but without
-the service being able to link those outputs together.
+outside of the owning client. This implements the Oblivious Pseudorandom Function (OPRF)
+protocol using hash-to-curve techniques to achieve this goal.
 
 # Protocol
 
 The protocol relies on the following data types:
 - `P`: A point on an elliptic curve derived from the input text using a hash-to-curve function.
-- `kᵢ`: A secret key unique to each client `i`.
 - `r`: A random blinding factor chosen by the client to ensure that the blinded point `Q` is different for each submission, even for the same input.
-- `Q`: The blinded point computed by the client as `Q = kᵢ · P · r`.
+- `Q`: The blinded point computed by the client as `Q = P · r`.
 - `s`: A master secret key held by the service.
-- `R`: The blinded result computed by the service as `R = (s/kᵢ) · Q = s · P · r`.
-- `U`: The unblinded result computed by the client as `U = r⁻¹ · R = s·P`.
+- `R`: The blinded (ec point) result computed by the service as `R = Q · s = P · r · s`.
+- `U`: The unblinded (ec point) result computed by the client as `U = r⁻¹ · R = s·P`.
 
 The protocol flow is as follows:
 
@@ -32,18 +26,18 @@ The protocol flow is as follows:
 Client                          Service
 ────────                        ───────
 1. P = HashToCurve(text)
-2. Q = kᵢ · P · r
-3. Send Q  ─────────────────►   R = (s/kᵢ) · Q
-           ◄─────────────────   R = s · P · r
-4. U = r⁻¹ · R = s · P
+2. Q = P · r
+3. Send Q  ─────────────────►   R = Q · s
+           ◄─────────────────   R = P · r · s
+4. U = R · r⁻¹ = P · s
 5. identityKey = BLAKE3(U)
 ``` 
 
 ## Details for each step
 
 1. The client takes the input text and applies a hash-to-curve function to derive a point `P` on the elliptic curve.
-2. The client computes the blinded point `Q` by multiplying `P` with their client key `kᵢ` and a random blinding factor `r`.
-3. The client sends the blinded point `Q` to the service. The service computes `R` by multiplying `Q` with the master key `s` and the modular inverse of the client's key `kᵢ`. This effectively cancels out the client's key, resulting in `R = s · P · r`.
+2. The client computes the blinded point `Q` by multiplying `P` with a random blinding factor `r`.
+3. The client sends the blinded point `Q` to the service. The service computes `R` by multiplying `Q` with the master key `s`. This results in `R = s · P · r`.
 4. The client receives `R` and unblinds it by multiplying with the inverse of the blinding factor `r`, yielding `U = s·P`.
 5. Finally, the client can derive a consistent identity key from `U` using the hash function BLAKE3.
 
@@ -74,9 +68,6 @@ revealing the input to the other party (the server). The server holds a secret
 key that is used to compute the pseudorandom function, but it does not learn
 anything about the client's input. This is used for things like password hashing
 and secure multi-party computation.
-
-**Note:** This project is inspired by OPRF but extends it with client-specific keys,
-making it a custom protocol rather than a standard OPRF implementation.
 - [Oblivious Pseudorandom Function - Wikipedia](https://en.wikipedia.org/wiki/Oblivious_pseudorandom_function)
 - [RFC 9497](https://www.rfc-editor.org/rfc/rfc9497.html)
 
