@@ -4,6 +4,7 @@ import com.codeheadsystems.hofmann.Curve;
 import com.codeheadsystems.hofmann.EliminationRequest;
 import com.codeheadsystems.hofmann.EliminationResponse;
 import com.codeheadsystems.hofmann.Server;
+import com.codeheadsystems.hofmann.rfc9497.OprfSuite;
 import java.math.BigInteger;
 import java.util.UUID;
 import org.bouncycastle.math.ec.ECPoint;
@@ -14,6 +15,18 @@ public class ServerImpl implements Server {
 
   public ServerImpl() {
     serverData = new ServerData(Curve.RANDOM_SCALER(), "SP:" + UUID.randomUUID());
+  }
+
+  /**
+   * Creates a ServerImpl with a deterministically derived key from seed and info.
+   * Uses RFC 9497 DeriveKeyPair to derive the private key.
+   *
+   * @param seed 32-byte random seed
+   * @param info application-specific info string
+   */
+  public ServerImpl(byte[] seed, byte[] info) {
+    BigInteger skS = OprfSuite.deriveKeyPair(seed, info);
+    serverData = new ServerData(skS, "SP:" + UUID.randomUUID());
   }
 
   @Override

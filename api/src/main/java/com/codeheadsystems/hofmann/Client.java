@@ -2,10 +2,10 @@ package com.codeheadsystems.hofmann;
 
 import static com.codeheadsystems.hofmann.Curve.BYTES_TO_HEX;
 import static com.codeheadsystems.hofmann.Curve.ECPOINT_TO_HEX;
-import static com.codeheadsystems.hofmann.Curve.HASH;
 import static com.codeheadsystems.hofmann.Curve.HEX_TO_ECPOINT;
 
 import com.codeheadsystems.hofmann.rfc9380.HashToCurve;
+import com.codeheadsystems.hofmann.rfc9497.OprfSuite;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
@@ -18,6 +18,7 @@ public class Client {
 
   /**
    * Defines the steps the client takes to convert sensitive data into a key that can be used for elimination.
+   * Implements RFC 9497 OPRF(P-256, SHA-256) mode 0 (OPRF).
    *
    * @param server        The server that provides the elimination process.
    * @param sensitiveData The sensitive data that we want to convert into a key for elimination.
@@ -33,13 +34,11 @@ public class Client {
     // blinded version of the point.
     final BigInteger blindingFactor = Curve.RANDOM_SCALER();
 
-    // First we hash the sensitive data to create a fixed-length representation. The additional security here is nominal,
-    // as this step does not protect from rainbow table attacks or preimage attacks on the original data.
-    final byte[] hashedBytes = HASH(sensitiveData.getBytes(StandardCharsets.UTF_8));
+    // Use raw UTF-8 bytes as input (RFC 9497 passes input directly to HashToGroup)
+    final byte[] input = sensitiveData.getBytes(StandardCharsets.UTF_8);
 
-    // Next, we map the hashed bytes to a point on the elliptic curve. This is done using a deterministic method that
-    // ensures the same input bytes will always produce the same curve point.
-    final ECPoint hashedEcPoint = hashToCurve(hashedBytes);
+    // Map the input bytes to a point on the P-256 curve using RFC 9497 HashToGroup DST
+    final ECPoint hashedEcPoint = hashToCurve(input);
 
     // Blind the hashed point and convert to hex for the server.
     final String blindedPointHex = blindEcPointToHex(hashedEcPoint, blindingFactor);
@@ -48,34 +47,12 @@ public class Client {
     final EliminationRequest eliminationRequest = new EliminationRequest(blindedPointHex, requestId);
     final EliminationResponse eliminationResponse = server.process(eliminationRequest);
 
-    // Unblind the hex-encoded point returned by the server.
-    ECPoint unblindedPoint = unblindEcPointFromHex(eliminationResponse.hexCodedEcPoint(), blindingFactor);
+    // Get the server's evaluated element (still blinded)
+    final ECPoint evaluatedElement = HEX_TO_ECPOINT(eliminationResponse.hexCodedEcPoint());
 
-    // Finally, we convert the unblinded point to bytes and hash it again to produce the final key. We generate the
-    // final identify key from this and the process identifier provided by the server, which allows us to trace back the
-    // final key to the specific server process that generated it.
-    final byte[] unblindedBytes = unblindedPoint.getEncoded(false);
-    final byte[] finalHash = HASH(unblindedBytes);
+    // RFC 9497 Finalize: unblind and produce the OPRF output
+    final byte[] finalHash = OprfSuite.finalize(input, blindingFactor, evaluatedElement);
     return eliminationResponse.processIdentifier() + ":" + BYTES_TO_HEX(finalHash);
-  }
-
-  /**
-   * We convert the hex-encoded point returned by the server back to an ECPoint and unblind it using the inverse of the
-   * blinding factor.
-   *
-   * @param hex            The hex-encoded elliptic curve point returned by the server after applying the server process.
-   * @param blindingFactor The random scalar we used to bind the request, which we will use to unblind the point
-   *                       returned by the server.
-   * @return The original ECPoint that resulted from the server processing, without revealing any information about the
-   * original data to the server.
-   */
-  private ECPoint unblindEcPointFromHex(final String hex, final BigInteger blindingFactor) {
-    // Convert the response back to an ECPoint and unblind it using the inverse of the blinding factor. This step
-    // retrieves the original point that resulted from the server processed, without revealing any information about
-    // the original data to the server.
-    final ECPoint eliminationPoint = HEX_TO_ECPOINT(hex);
-    final BigInteger inverseBlindingFactor = blindingFactor.modInverse(Curve.DEFAULT_CURVE.getN());
-    return eliminationPoint.multiply(inverseBlindingFactor);
   }
 
   /**
@@ -87,48 +64,19 @@ public class Client {
    * @return A hex-encoded string representation of the blinded EC point, which can be sent to the server for processing.
    */
   private String blindEcPointToHex(final ECPoint hashedData, final BigInteger blindingFactor) {
-    // This blinding factor is used to blind the hashed data point before sending it to the server. The blinding process
-    // ensures that the server cannot learn anything about the original data or the hashed point, as it only sees a
-    // blinded version of the point.
     final ECPoint blindedPoint = hashedData.multiply(blindingFactor).normalize();
-
-    // We convert the blinded point to a hexadecimal string representation to send to the server. The server will process
-    // this blinded point and return an elimination point, which is also represented as a hexadecimal string.
     return ECPOINT_TO_HEX(blindedPoint);
   }
 
   /**
-   * Maps the hashed bytes to a point on the elliptic curve using RFC 9380 compliant hash-to-curve.
-   * <p>
-   * This implementation follows RFC 9380 Section 8.7 (secp256k1_XMD:SHA-256_SSWU_RO_) which provides:
-   * <ol>
-   * <li> Uniform distribution of points across the curve (random oracle property)</li>
-   * <li> Deterministic mapping - same input always produces the same output</li>
-   * <li> Cryptographic security properties required for OPRF-like protocols</li>
-   * </ol>
-   * <p>
-   * The mapping uses:
-   * - hash_to_field: Expands input to field elements using SHA-256
-   * - Simplified SWU: Maps field elements to an isogenous curve
-   * - 3-isogeny: Transforms points to secp256k1
+   * Maps the input bytes to a point on P-256 using RFC 9497 HashToGroup.
+   * Uses the RFC 9497 P256-SHA256 DST for domain separation.
    *
-   * @param hash The input bytes that have been hashed and need to be mapped to a curve point.
-   * @return An ECPoint representing the hashed data on the elliptic curve, uniformly distributed and
-   *         cryptographically secure.
+   * @param input The raw input bytes to map to a curve point.
+   * @return An ECPoint on P-256.
    */
-  private ECPoint hashToCurve(byte[] hash) {
-    // Use application-specific domain separation tag
-    String dst = "HOFMANN-ELIMINATION-V1-CS01";
-    return HashToCurve.hash(hash, dst, Curve.DEFAULT_CURVE);
-  }
-
-  private ECPoint hashToCurveApproximation(byte[] hash) {
-    BigInteger scalar = new BigInteger(1, hash)
-        .mod(Curve.DEFAULT_CURVE.getN().subtract(BigInteger.ONE))
-        .add(BigInteger.ONE);
-
-    // Multiply the generator point by the scalar to get a point on the curve
-    return Curve.DEFAULT_CURVE.getG().multiply(scalar).normalize();
+  private ECPoint hashToCurve(byte[] input) {
+    return HashToCurve.forP256(Curve.DEFAULT_CURVE).hashToCurve(input, OprfSuite.HASH_TO_GROUP_DST);
   }
 
 }

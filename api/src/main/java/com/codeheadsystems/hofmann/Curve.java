@@ -4,18 +4,20 @@ import static org.bouncycastle.util.encoders.Hex.decode;
 import static org.bouncycastle.util.encoders.Hex.toHexString;
 
 import java.math.BigInteger;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.function.Function;
 import org.bouncycastle.asn1.x9.X9ECParameters;
-import org.bouncycastle.crypto.digests.Blake3Digest;
 import org.bouncycastle.crypto.ec.CustomNamedCurves;
 import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.bouncycastle.math.ec.ECPoint;
 
 public interface Curve {
 
-  String DEFAULT_CURVE_NAME = "secp256k1";
+  String DEFAULT_CURVE_NAME = "P-256";
   ECDomainParameters DEFAULT_CURVE = FACTORY().apply(DEFAULT_CURVE_NAME);
+  ECDomainParameters SECP256K1_CURVE = FACTORY().apply("secp256k1");
   SecureRandom RANDOM = new SecureRandom();
 
   static Function<String, ECDomainParameters> FACTORY() {
@@ -34,11 +36,28 @@ public interface Curve {
   }
 
   static byte[] HASH(final byte[] bytes) {
-    Blake3Digest digest = new Blake3Digest();
-    digest.update(bytes, 0, bytes.length);
-    byte[] hash = new byte[digest.getDigestSize()];
-    digest.doFinal(hash, 0);
-    return hash;
+    try {
+      MessageDigest digest = MessageDigest.getInstance("SHA-256");
+      return digest.digest(bytes);
+    } catch (NoSuchAlgorithmException e) {
+      throw new RuntimeException("SHA-256 not available", e);
+    }
+  }
+
+  /**
+   * Integer to Octet String Primitive (I2OSP) from RFC 8017.
+   * Converts a non-negative integer to an octet string of specified length.
+   */
+  static byte[] I2OSP(int value, int length) {
+    if (value < 0 || (length < 4 && value >= (1 << (8 * length)))) {
+      throw new IllegalArgumentException("Value too large for specified length");
+    }
+    byte[] result = new byte[length];
+    for (int i = length - 1; i >= 0; i--) {
+      result[i] = (byte) (value & 0xFF);
+      value >>= 8;
+    }
+    return result;
   }
 
   /**

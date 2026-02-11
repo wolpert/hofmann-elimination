@@ -94,4 +94,34 @@ public class HashToField {
 
     return new HashToField(p, L);
   }
+
+  /**
+   * Factory method for P-256 base field parameters.
+   * Used for hash_to_curve (HashToGroup) operations on P-256.
+   *
+   * @return HashToField instance configured for P-256 field arithmetic
+   */
+  public static HashToField forP256() {
+    // P-256 field prime
+    BigInteger p = new BigInteger(
+        "ffffffff00000001000000000000000000000000ffffffffffffffffffffffff",
+        16
+    );
+    return new HashToField(p, 48);
+  }
+
+  /**
+   * Factory method for P-256 scalar field parameters.
+   * Used for HashToScalar operations (modulus is group order n, not field prime).
+   *
+   * @return HashToField instance configured for P-256 group order
+   */
+  public static HashToField forP256Scalar() {
+    // P-256 group order n
+    BigInteger n = new BigInteger(
+        "ffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551",
+        16
+    );
+    return new HashToField(n, 48);
+  }
 }
