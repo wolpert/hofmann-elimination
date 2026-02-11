@@ -3,21 +3,19 @@ package com.codeheadsystems.hofmann.rfc9380;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import org.bouncycastle.crypto.params.ECDomainParameters;
+import org.bouncycastle.math.ec.ECCurve;
 import org.bouncycastle.math.ec.ECPoint;
 
 /**
- * RFC 9380 compliant hash-to-curve implementation for secp256k1.
+ * RFC 9380 compliant hash-to-curve implementation.
  * <p>
- * Implements the secp256k1_XMD:SHA-256_SSWU_RO_ cipher suite which provides
- * uniform encoding (random oracle) of arbitrary byte strings to points on secp256k1.
+ * Supports both secp256k1 (via 3-isogeny) and P-256 (direct SWU, no isogeny).
  * <p>
  * The implementation follows the complete hash_to_curve flow from RFC 9380 Section 3:
  * 1. hash_to_field: Convert message to two field elements using SHA-256 expansion
- * 2. map_to_curve: For each field element, apply Simplified SWU then 3-isogeny to get a point on secp256k1
- * 3. Point addition: Add the two mapped points on secp256k1
- * 4. clear_cofactor: No-op for secp256k1 (h_eff = 1)
- * <p>
- * This provides the cryptographic properties needed for OPRF-like protocols.
+ * 2. map_to_curve: For each field element, apply Simplified SWU (plus isogeny for secp256k1)
+ * 3. Point addition: Add the two mapped points
+ * 4. clear_cofactor: No-op (h_eff = 1 for both secp256k1 and P-256)
  *
  * @see <a href="https://www.rfc-editor.org/rfc/rfc9380.html">RFC 9380</a>
  */
@@ -32,29 +30,42 @@ public class HashToCurve {
   private final HashToField hashToField;
   private final SimplifiedSWU simplifiedSWU;
   private final IsogenyMap isogenyMap;
+  private final ECCurve targetCurve; // used when isogenyMap == null (e.g. P-256)
 
   /**
-   * Creates a HashToCurve instance with the given components.
+   * Creates a HashToCurve instance with isogeny (secp256k1 style).
    *
    * @param hashToField   hash_to_field implementation
    * @param simplifiedSWU Simplified SWU mapping
-   * @param isogenyMap    3-isogeny map to target curve
+   * @param isogenyMap    isogeny map to target curve
    */
   public HashToCurve(HashToField hashToField, SimplifiedSWU simplifiedSWU, IsogenyMap isogenyMap) {
     this.hashToField = hashToField;
     this.simplifiedSWU = simplifiedSWU;
     this.isogenyMap = isogenyMap;
+    this.targetCurve = null;
+  }
+
+  /**
+   * Creates a HashToCurve instance without isogeny (P-256 style, direct SWU).
+   *
+   * @param hashToField   hash_to_field implementation
+   * @param simplifiedSWU Simplified SWU mapping
+   * @param targetCurve   target curve for direct point creation
+   */
+  HashToCurve(HashToField hashToField, SimplifiedSWU simplifiedSWU, ECCurve targetCurve) {
+    this.hashToField = hashToField;
+    this.simplifiedSWU = simplifiedSWU;
+    this.isogenyMap = null;
+    this.targetCurve = targetCurve;
   }
 
   /**
    * Hashes a message to a point on the curve (uniform encoding, random oracle).
-   * <p>
-   * This is the main entry point for the hash_to_curve operation.
-   * It produces a uniformly random point on the curve given an arbitrary input message.
    *
    * @param message Message to hash
    * @param dst     Domain Separation Tag (should be application-specific)
-   * @return Point on secp256k1 that is uniformly distributed
+   * @return Point on the curve that is uniformly distributed
    */
   public ECPoint hashToCurve(byte[] message, byte[] dst) {
     // Step 1: hash_to_field - produce two field elements
@@ -62,17 +73,24 @@ public class HashToCurve {
     BigInteger u0 = fieldElements[0];
     BigInteger u1 = fieldElements[1];
 
-    // Step 2: map_to_curve (SWU + isogeny) for each field element
+    // Step 2: map_to_curve for each field element
     BigInteger[] swu0 = simplifiedSWU.map(u0);
-    ECPoint Q0 = isogenyMap.map(swu0);
-
     BigInteger[] swu1 = simplifiedSWU.map(u1);
-    ECPoint Q1 = isogenyMap.map(swu1);
 
-    // Step 3: Add the two points on secp256k1
+    ECPoint Q0;
+    ECPoint Q1;
+    if (isogenyMap != null) {
+      Q0 = isogenyMap.map(swu0);
+      Q1 = isogenyMap.map(swu1);
+    } else {
+      Q0 = targetCurve.createPoint(swu0[0], swu0[1]);
+      Q1 = targetCurve.createPoint(swu1[0], swu1[1]);
+    }
+
+    // Step 3: Add the two points
     ECPoint R = Q0.add(Q1).normalize();
 
-    // Step 4: clear_cofactor (h_eff = 1 for secp256k1, so this is a no-op)
+    // Step 4: clear_cofactor (h_eff = 1 for both secp256k1 and P-256, no-op)
     return R;
   }
 
@@ -81,7 +99,7 @@ public class HashToCurve {
    *
    * @param message Message to hash
    * @param dst     Domain Separation Tag as string
-   * @return Point on secp256k1
+   * @return Point on the curve
    */
   public ECPoint hashToCurve(byte[] message, String dst) {
     return hashToCurve(message, dst.getBytes(StandardCharsets.UTF_8));
@@ -103,10 +121,22 @@ public class HashToCurve {
   }
 
   /**
+   * Factory method to create a HashToCurve instance for P-256.
+   * Uses the standard parameters from RFC 9380 Section 8.2.
+   * No isogeny is needed since P-256 has A != 0.
+   *
+   * @param domainParams P-256 domain parameters
+   * @return HashToCurve instance configured for P256_XMD:SHA-256_SSWU_RO_
+   */
+  public static HashToCurve forP256(ECDomainParameters domainParams) {
+    HashToField hashToField = HashToField.forP256();
+    SimplifiedSWU simplifiedSWU = SimplifiedSWU.forP256(domainParams);
+
+    return new HashToCurve(hashToField, simplifiedSWU, domainParams.getCurve());
+  }
+
+  /**
    * Convenience method to hash directly using secp256k1 with default DST.
-   * <p>
-   * Note: For production use, applications should use their own application-specific DST
-   * rather than the default.
    *
    * @param message      Message to hash
    * @param domainParams secp256k1 domain parameters
