@@ -41,6 +41,48 @@ public class IsogenyMap {
   }
 
   /**
+   * Factory method for secp256k1 3-isogeny map.
+   * Coefficients are from RFC 9380 Appendix E.1 for the secp256k1 3-isogeny.
+   *
+   * @param targetCurve The secp256k1 curve
+   * @return IsogenyMap instance configured for secp256k1
+   */
+  public static IsogenyMap forSecp256k1(ECCurve targetCurve) {
+    // x-coordinate numerator coefficients (degree 3)
+    BigInteger[] xNum = {
+        new BigInteger("8e38e38e38e38e38e38e38e38e38e38e38e38e38e38e38e38e38e38daaaaa8c7", 16),
+        new BigInteger("07d3d4c80bc321d5b9f315cea7fd44c5d595d2fc0bf63b92dfff1044f17c6581", 16),
+        new BigInteger("534c328d23f234e6e2a413deca25caece4506144037c40314ecbd0b53d9dd262", 16),
+        new BigInteger("8e38e38e38e38e38e38e38e38e38e38e38e38e38e38e38e38e38e38daaaaa88c", 16)
+    };
+
+    // x-coordinate denominator coefficients (degree 2)
+    BigInteger[] xDen = {
+        new BigInteger("d35771193d94918a9ca34ccbb7b640dd86cd409542f8487d9fe6b745781eb49b", 16),
+        new BigInteger("edadc6f64383dc1df7c4b2d51b54225406d36b641f5e41bbc52a56612a8c6d14", 16),
+        BigInteger.ONE
+    };
+
+    // y-coordinate numerator coefficients (degree 3)
+    BigInteger[] yNum = {
+        new BigInteger("4bda12f684bda12f684bda12f684bda12f684bda12f684bda12f684b8e38e23c", 16),
+        new BigInteger("c75e0c32d5cb7c0fa9d0a54b12a0a6d5647ab046d686da6fdffc90fc201d71a3", 16),
+        new BigInteger("29a6194691f91a73715209ef6512e576722830a201be2018a765e85a9ecee931", 16),
+        new BigInteger("2f684bda12f684bda12f684bda12f684bda12f684bda12f684bda12f38e38d84", 16)
+    };
+
+    // y-coordinate denominator coefficients (degree 3)
+    BigInteger[] yDen = {
+        new BigInteger("fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffff93b", 16),
+        new BigInteger("7a06534bb8bdb49fd5e9e6632722c2989467c1bfc8e8d978dfb425d2685c2573", 16),
+        new BigInteger("6484aa716545ca2cf3a70c3fa8fe337e0a3d21162f0d6299a7bf8192bfd2a76f", 16),
+        BigInteger.ONE
+    };
+
+    return new IsogenyMap(targetCurve, xNum, xDen, yNum, yDen);
+  }
+
+  /**
    * Maps coordinate pairs from the isogenous curve E' to a point on the target curve.
    *
    * @param coords BigInteger[2] containing [x', y'] from E'
@@ -81,47 +123,5 @@ public class IsogenyMap {
     }
 
     return result;
-  }
-
-  /**
-   * Factory method for secp256k1 3-isogeny map.
-   * Coefficients are from RFC 9380 Appendix E.1 for the secp256k1 3-isogeny.
-   *
-   * @param targetCurve The secp256k1 curve
-   * @return IsogenyMap instance configured for secp256k1
-   */
-  public static IsogenyMap forSecp256k1(ECCurve targetCurve) {
-    // x-coordinate numerator coefficients (degree 3)
-    BigInteger[] xNum = {
-        new BigInteger("8e38e38e38e38e38e38e38e38e38e38e38e38e38e38e38e38e38e38daaaaa8c7", 16),
-        new BigInteger("07d3d4c80bc321d5b9f315cea7fd44c5d595d2fc0bf63b92dfff1044f17c6581", 16),
-        new BigInteger("534c328d23f234e6e2a413deca25caece4506144037c40314ecbd0b53d9dd262", 16),
-        new BigInteger("8e38e38e38e38e38e38e38e38e38e38e38e38e38e38e38e38e38e38daaaaa88c", 16)
-    };
-
-    // x-coordinate denominator coefficients (degree 2)
-    BigInteger[] xDen = {
-        new BigInteger("d35771193d94918a9ca34ccbb7b640dd86cd409542f8487d9fe6b745781eb49b", 16),
-        new BigInteger("edadc6f64383dc1df7c4b2d51b54225406d36b641f5e41bbc52a56612a8c6d14", 16),
-        BigInteger.ONE
-    };
-
-    // y-coordinate numerator coefficients (degree 3)
-    BigInteger[] yNum = {
-        new BigInteger("4bda12f684bda12f684bda12f684bda12f684bda12f684bda12f684b8e38e23c", 16),
-        new BigInteger("c75e0c32d5cb7c0fa9d0a54b12a0a6d5647ab046d686da6fdffc90fc201d71a3", 16),
-        new BigInteger("29a6194691f91a73715209ef6512e576722830a201be2018a765e85a9ecee931", 16),
-        new BigInteger("2f684bda12f684bda12f684bda12f684bda12f684bda12f684bda12f38e38d84", 16)
-    };
-
-    // y-coordinate denominator coefficients (degree 3)
-    BigInteger[] yDen = {
-        new BigInteger("fffffffffffffffffffffffffffffffffffffffffffffffffffffffefffff93b", 16),
-        new BigInteger("7a06534bb8bdb49fd5e9e6632722c2989467c1bfc8e8d978dfb425d2685c2573", 16),
-        new BigInteger("6484aa716545ca2cf3a70c3fa8fe337e0a3d21162f0d6299a7bf8192bfd2a76f", 16),
-        BigInteger.ONE
-    };
-
-    return new IsogenyMap(targetCurve, xNum, xDen, yNum, yDen);
   }
 }

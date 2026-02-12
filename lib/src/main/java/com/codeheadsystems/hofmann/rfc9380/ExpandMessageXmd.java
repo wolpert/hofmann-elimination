@@ -22,9 +22,9 @@ public class ExpandMessageXmd {
   /**
    * Expands a message into a uniformly random byte string.
    *
-   * @param msg         The message to expand
-   * @param dst         Domain Separation Tag (DST)
-   * @param lenInBytes  The desired output length in bytes
+   * @param msg        The message to expand
+   * @param dst        Domain Separation Tag (DST)
+   * @param lenInBytes The desired output length in bytes
    * @return A byte array of length lenInBytes containing uniformly distributed bytes
    * @throws IllegalArgumentException if parameters are invalid
    */

@@ -27,52 +27,6 @@ public class HashToField {
   }
 
   /**
-   * Hashes a message to one or more field elements.
-   *
-   * @param msg   The message to hash
-   * @param dst   Domain Separation Tag
-   * @param count Number of field elements to produce (typically 2 for uniform encoding)
-   * @return Array of field elements in Fp
-   */
-  public BigInteger[] hashToField(byte[] msg, byte[] dst, int count) {
-    if (count <= 0) {
-      throw new IllegalArgumentException("count must be positive");
-    }
-
-    // len_in_bytes = count * m * L
-    int lenInBytes = count * m * L;
-
-    // uniform_bytes = expand_message_xmd(msg, DST, len_in_bytes)
-    byte[] uniformBytes = ExpandMessageXmd.expand(msg, dst, lenInBytes);
-
-    // Convert uniform_bytes to field elements
-    BigInteger[] fieldElements = new BigInteger[count];
-
-    for (int i = 0; i < count; i++) {
-      // elm_offset = L * i * m
-      int elmOffset = L * i * m;
-
-      // tv = substr(uniform_bytes, elm_offset, L)
-      byte[] tv = new byte[L];
-      System.arraycopy(uniformBytes, elmOffset, tv, 0, L);
-
-      // e_i = OS2IP(tv) mod p
-      BigInteger element = os2ip(tv).mod(p);
-      fieldElements[i] = element;
-    }
-
-    return fieldElements;
-  }
-
-  /**
-   * Octet String to Integer Primitive (OS2IP) from RFC 8017.
-   * Converts an octet string to a non-negative integer.
-   */
-  private BigInteger os2ip(byte[] octets) {
-    return new BigInteger(1, octets); // 1 means positive
-  }
-
-  /**
    * Factory method for secp256k1 field parameters.
    * <p>
    * For secp256k1:
@@ -123,5 +77,51 @@ public class HashToField {
         16
     );
     return new HashToField(n, 48);
+  }
+
+  /**
+   * Hashes a message to one or more field elements.
+   *
+   * @param msg   The message to hash
+   * @param dst   Domain Separation Tag
+   * @param count Number of field elements to produce (typically 2 for uniform encoding)
+   * @return Array of field elements in Fp
+   */
+  public BigInteger[] hashToField(byte[] msg, byte[] dst, int count) {
+    if (count <= 0) {
+      throw new IllegalArgumentException("count must be positive");
+    }
+
+    // len_in_bytes = count * m * L
+    int lenInBytes = count * m * L;
+
+    // uniform_bytes = expand_message_xmd(msg, DST, len_in_bytes)
+    byte[] uniformBytes = ExpandMessageXmd.expand(msg, dst, lenInBytes);
+
+    // Convert uniform_bytes to field elements
+    BigInteger[] fieldElements = new BigInteger[count];
+
+    for (int i = 0; i < count; i++) {
+      // elm_offset = L * i * m
+      int elmOffset = L * i * m;
+
+      // tv = substr(uniform_bytes, elm_offset, L)
+      byte[] tv = new byte[L];
+      System.arraycopy(uniformBytes, elmOffset, tv, 0, L);
+
+      // e_i = OS2IP(tv) mod p
+      BigInteger element = os2ip(tv).mod(p);
+      fieldElements[i] = element;
+    }
+
+    return fieldElements;
+  }
+
+  /**
+   * Octet String to Integer Primitive (OS2IP) from RFC 8017.
+   * Converts an octet string to a non-negative integer.
+   */
+  private BigInteger os2ip(byte[] octets) {
+    return new BigInteger(1, octets); // 1 means positive
   }
 }

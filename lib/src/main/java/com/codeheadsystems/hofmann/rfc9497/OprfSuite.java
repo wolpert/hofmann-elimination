@@ -83,8 +83,8 @@ public class OprfSuite {
    * Output = SHA-256(I2OSP(len(input),2) || input || I2OSP(33,2) || SerializeElement(N) || "Finalize")
    * where N = blind^(-1) * evaluatedElement
    *
-   * @param input           original client input bytes
-   * @param blind           the blinding scalar used by the client
+   * @param input            original client input bytes
+   * @param blind            the blinding scalar used by the client
    * @param evaluatedElement the server's response point (skS * blind * H(input))
    * @return 32-byte OPRF output
    */
