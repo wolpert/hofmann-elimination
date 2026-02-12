@@ -3,12 +3,12 @@ package com.codeheadsystems.hofmann.rfc9497;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.codeheadsystems.hofmann.Curve;
-import com.codeheadsystems.hofmann.EcUtilities;
 import com.codeheadsystems.hofmann.rfc9380.HashToCurve;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import org.bouncycastle.math.ec.ECPoint;
+import org.bouncycastle.util.encoders.Hex;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -60,7 +60,7 @@ public class OprfVectorsTest {
     // Client: finalize
     byte[] output = OprfSuite.finalize(input, blind, evaluatedElement);
 
-    assertThat(EcUtilities.BYTES_TO_HEX(output))
+    assertThat(Hex.toHexString(output))
         .isEqualTo("a0b34de5fa4c5b6da07e72af73cc507cceeb48981b97b7285fc375345fe495dd");
   }
 
@@ -89,7 +89,7 @@ public class OprfVectorsTest {
     // Client: finalize
     byte[] output = OprfSuite.finalize(input, blind, evaluatedElement);
 
-    assertThat(EcUtilities.BYTES_TO_HEX(output))
+    assertThat(Hex.toHexString(output))
         .isEqualTo("c748ca6dd327f0ce85f4ae3a8cd6d4d5390bbb804c9e12dcf94f853fece3dcce");
   }
 }

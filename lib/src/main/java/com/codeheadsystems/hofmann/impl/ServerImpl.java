@@ -12,35 +12,25 @@ import org.bouncycastle.math.ec.ECPoint;
 
 public class ServerImpl implements Server {
 
-  private final ServerData serverData;
+  private final Curve curve;
+  private final BigInteger masterKey;
+  private final String processIdentifier;
 
   public ServerImpl() {
-    serverData = new ServerData(Curve.P256_CURVE.randomScaler(), "SP:" + UUID.randomUUID());
+    this.curve = Curve.P256_CURVE;
+    this.masterKey = curve.randomScaler();
+    this.processIdentifier = "SP:" + UUID.randomUUID();
   }
 
-  /**
-   * Creates a ServerImpl with a deterministically derived key from seed and info.
-   * Uses RFC 9497 DeriveKeyPair to derive the private key.
-   *
-   * @param seed 32-byte random seed
-   * @param info application-specific info string
-   */
-  public ServerImpl(byte[] seed, byte[] info) {
-    BigInteger skS = OprfSuite.deriveKeyPair(seed, info);
-    serverData = new ServerData(skS, "SP:" + UUID.randomUUID());
-  }
 
   @Override
   public EliminationResponse process(final EliminationRequest eliminationRequest) {
-    // Apply the client key to our master key for this request.
-    BigInteger requestKey = serverData.masterKey();
-    ECPoint q = EcUtilities.HEX_TO_ECPOINT(eliminationRequest.hexCodedEcPoint());
-    ECPoint result = q.multiply(requestKey).normalize();
-    return new EliminationResponse(EcUtilities.ECPOINT_TO_HEX(result), serverData.processIdentifier());
+    ECPoint q = curve.toEcPoint(eliminationRequest.hexCodedEcPoint())
+        .orElseThrow(() -> new IllegalArgumentException("Invalid hex-encoded EC point: " + eliminationRequest.hexCodedEcPoint()));
+    ECPoint result = q.multiply(masterKey).normalize();
+    return new EliminationResponse(curve.toHex(result).orElseThrow(() -> new IllegalArgumentException("Invalid EC point: " + result)),
+        processIdentifier);
   }
 
-  public record ServerData(BigInteger masterKey, String processIdentifier) {
-
-  }
 
 }

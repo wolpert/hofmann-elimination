@@ -2,12 +2,14 @@ package com.codeheadsystems.hofmann;
 
 import java.math.BigInteger;
 import java.security.SecureRandom;
+import java.util.Optional;
 import java.util.function.Function;
 import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.crypto.ec.CustomNamedCurves;
 import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.bouncycastle.math.ec.ECCurve;
 import org.bouncycastle.math.ec.ECPoint;
+import org.bouncycastle.util.encoders.Hex;
 
 public record Curve(ECDomainParameters params, ECCurve curve, ECPoint g, BigInteger n, BigInteger h) {
 
@@ -62,6 +64,19 @@ public record Curve(ECDomainParameters params, ECCurve curve, ECPoint g, BigInte
       key = new BigInteger(n.bitLength(), RANDOM);
     } while (key.compareTo(BigInteger.ONE) < 0 || key.compareTo(n) >= 0);
     return key;
+  }
+
+  public Optional<String> toHex(final ECPoint blindedPoint) {
+    return Optional.ofNullable(blindedPoint)
+        .map(point -> point.getEncoded(true))
+        .map(Hex::toHexString);
+  }
+
+  public Optional<ECPoint> toEcPoint(final String hex) {
+    return Optional.ofNullable(hex)
+        .filter(h -> !h.isEmpty())
+        .map(Hex::decode)
+        .map(encoded -> params().getCurve().decodePoint(encoded));
   }
 
 }
