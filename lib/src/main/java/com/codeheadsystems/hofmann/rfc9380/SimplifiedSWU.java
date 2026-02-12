@@ -30,7 +30,7 @@ public class SimplifiedSWU {
    * @param BPrime       The B coefficient of the isogenous curve E'
    * @param ZValue       The Z parameter for the SWU algorithm
    */
-  public SimplifiedSWU(ECDomainParameters domainParams, BigInteger APrime, BigInteger BPrime, BigInteger ZValue) {
+  private SimplifiedSWU(ECDomainParameters domainParams, BigInteger APrime, BigInteger BPrime, BigInteger ZValue) {
     this.curve = domainParams.getCurve();
     BigInteger p = curve.getField().getCharacteristic();
 

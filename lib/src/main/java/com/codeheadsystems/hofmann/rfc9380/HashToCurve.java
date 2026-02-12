@@ -135,9 +135,11 @@ public class HashToCurve {
     if (isogenyMap != null) {
       Q0 = isogenyMap.map(swu0);
       Q1 = isogenyMap.map(swu1);
-    } else {
+    } else if (targetCurve != null) {
       Q0 = targetCurve.createPoint(swu0[0], swu0[1]);
       Q1 = targetCurve.createPoint(swu1[0], swu1[1]);
+    } else {
+      throw new IllegalStateException("HashToCurve: both isogenyMap and targetCurve are null");
     }
 
     // Step 3: Add the two points

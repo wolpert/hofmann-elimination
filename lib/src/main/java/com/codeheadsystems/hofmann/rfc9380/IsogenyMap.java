@@ -28,7 +28,7 @@ public class IsogenyMap {
    * @param yNumCoeffs  Coefficients for y numerator polynomial
    * @param yDenCoeffs  Coefficients for y denominator polynomial
    */
-  public IsogenyMap(ECCurve targetCurve,
+  private IsogenyMap(ECCurve targetCurve,
                     BigInteger[] xNumCoeffs,
                     BigInteger[] xDenCoeffs,
                     BigInteger[] yNumCoeffs,

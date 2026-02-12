@@ -20,7 +20,7 @@ public class HashToField {
    * @param p Prime field modulus
    * @param L Length parameter (must be >= ceil((ceil(log2(p)) + k) / 8) where k is security parameter)
    */
-  public HashToField(BigInteger p, int L) {
+  private HashToField(BigInteger p, int L) {
     this.p = p;
     this.L = L;
     this.m = 1; // secp256k1 is a prime field, not an extension field
