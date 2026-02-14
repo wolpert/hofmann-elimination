@@ -1,6 +1,7 @@
 package com.codeheadsystems.hofmann.rfc9497;
 
 import com.codeheadsystems.hofmann.Curve;
+import com.codeheadsystems.hofmann.OctetStringUtils;
 import com.codeheadsystems.hofmann.rfc9380.HashToField;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
@@ -62,7 +63,7 @@ public class OprfSuite {
    */
   public static BigInteger deriveKeyPair(byte[] seed, byte[] info) {
     // deriveInput = seed || I2OSP(len(info), 2) || info
-    byte[] deriveInput = concat(seed, concat(Curve.I2OSP(info.length, 2), info));
+    byte[] deriveInput = concat(seed, OctetStringUtils.I2OSP(info.length, 2), info);
 
     int counter = 0;
     BigInteger skS = BigInteger.ZERO;
@@ -70,7 +71,7 @@ public class OprfSuite {
       if (counter > 255) {
         throw new RuntimeException("DeriveKeyPair: exceeded counter limit");
       }
-      byte[] counterInput = concat(deriveInput, Curve.I2OSP(counter, 1));
+      byte[] counterInput = concat(deriveInput, OctetStringUtils.I2OSP(counter, 1));
       skS = hashToScalar(counterInput, DERIVE_KEY_PAIR_DST);
       counter++;
     }
@@ -100,13 +101,10 @@ public class OprfSuite {
     // hashInput = I2OSP(len(input),2) || input || I2OSP(len(unblindedElement),2) || unblindedElement || "Finalize"
     byte[] finalizeLabel = "Finalize".getBytes(StandardCharsets.UTF_8);
     byte[] hashInput = concat(
-        concat(
-            concat(
-                concat(Curve.I2OSP(input.length, 2), input),
-                Curve.I2OSP(unblindedElement.length, 2)
-            ),
-            unblindedElement
-        ),
+        OctetStringUtils.I2OSP(input.length, 2),
+        input,
+        OctetStringUtils.I2OSP(unblindedElement.length, 2),
+        unblindedElement,
         finalizeLabel
     );
 
@@ -118,10 +116,17 @@ public class OprfSuite {
     }
   }
 
-  private static byte[] concat(byte[] a, byte[] b) {
-    byte[] result = new byte[a.length + b.length];
-    System.arraycopy(a, 0, result, 0, a.length);
-    System.arraycopy(b, 0, result, a.length, b.length);
+  private static byte[] concat(byte[]... arrays) {
+    int totalLength = 0;
+    for (byte[] arr : arrays) {
+      totalLength += arr.length;
+    }
+    byte[] result = new byte[totalLength];
+    int offset = 0;
+    for (byte[] arr : arrays) {
+      System.arraycopy(arr, 0, result, offset, arr.length);
+      offset += arr.length;
+    }
     return result;
   }
 }

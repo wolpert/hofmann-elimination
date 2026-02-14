@@ -2,6 +2,7 @@ package com.codeheadsystems.hofmann.impl;
 
 import com.codeheadsystems.hofmann.Curve;
 import com.codeheadsystems.hofmann.EliminationRequest;
+import com.codeheadsystems.hofmann.OctetStringUtils;
 import com.codeheadsystems.hofmann.EliminationResponse;
 import com.codeheadsystems.hofmann.Server;
 import java.math.BigInteger;
@@ -23,9 +24,9 @@ public class ServerImpl implements Server {
 
   @Override
   public EliminationResponse process(final EliminationRequest eliminationRequest) {
-    ECPoint q = curve.toEcPoint(eliminationRequest.hexCodedEcPoint());
+    ECPoint q = OctetStringUtils.toEcPoint(curve, eliminationRequest.hexCodedEcPoint());
     ECPoint result = q.multiply(masterKey).normalize();
-    return new EliminationResponse(curve.toHex(result), processIdentifier);
+    return new EliminationResponse(OctetStringUtils.toHex(result), processIdentifier);
   }
 
 

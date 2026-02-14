@@ -1,6 +1,6 @@
 package com.codeheadsystems.hofmann.rfc9380;
 
-import com.codeheadsystems.hofmann.Curve;
+import com.codeheadsystems.hofmann.OctetStringUtils;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
@@ -50,7 +50,7 @@ public class ExpandMessageXmd {
       byte[] zPad = new byte[R_IN_BYTES];
 
       // l_i_b_str = I2OSP(len_in_bytes, 2)
-      byte[] libStr = Curve.I2OSP(lenInBytes, 2);
+      byte[] libStr = OctetStringUtils.I2OSP(lenInBytes, 2);
 
       // msg_prime = Z_pad || msg || l_i_b_str || I2OSP(0, 1) || DST_prime
       byte[] msgPrime = ByteBuffer.allocate(R_IN_BYTES + msg.length + 2 + 1 + dstPrime.length)

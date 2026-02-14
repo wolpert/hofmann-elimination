@@ -1,5 +1,6 @@
 package com.codeheadsystems.hofmann;
 
+import com.codeheadsystems.hofmann.OctetStringUtils;
 import com.codeheadsystems.hofmann.rfc9380.HashToCurve;
 import com.codeheadsystems.hofmann.rfc9497.OprfSuite;
 import java.math.BigInteger;
@@ -48,7 +49,7 @@ public class Client {
     final EliminationResponse eliminationResponse = server.process(eliminationRequest);
 
     // Get the server's evaluated element (still blinded)
-    final ECPoint evaluatedElement = curve.toEcPoint(eliminationResponse.hexCodedEcPoint());
+    final ECPoint evaluatedElement = OctetStringUtils.toEcPoint(curve, eliminationResponse.hexCodedEcPoint());
 
     // RFC 9497 Finalize: unblind and produce the OPRF output
     final byte[] finalHash = OprfSuite.finalize(input, blindingFactor, evaluatedElement);
@@ -64,7 +65,7 @@ public class Client {
    * @return A hex-encoded string representation of the blinded EC point, which can be sent to the server for processing.
    */
   private String blindEcPointToHex(final ECPoint hashedData, final BigInteger blindingFactor) {
-    return curve.toHex(hashedData.multiply(blindingFactor).normalize());
+    return OctetStringUtils.toHex(hashedData.multiply(blindingFactor).normalize());
   }
 
   /**
