@@ -1,6 +1,5 @@
 package com.codeheadsystems.hofmann;
 
-import com.codeheadsystems.hofmann.OctetStringUtils;
 import com.codeheadsystems.hofmann.rfc9380.HashToCurve;
 import com.codeheadsystems.hofmann.rfc9497.OprfSuite;
 import java.math.BigInteger;
@@ -12,9 +11,11 @@ import org.bouncycastle.util.encoders.Hex;
 public class Client {
 
   private final Curve curve;
+  private final HashToCurve hashToCurve;
 
   public Client() {
     curve = Curve.P256_CURVE;
+    hashToCurve = HashToCurve.forP256();
   }
 
   /**
@@ -25,7 +26,7 @@ public class Client {
    * @param sensitiveData The sensitive data that we want to convert into a key for elimination.
    * @return an identity key that represents the original sensitive data after processing through the elimination protocol.
    */
-  public String covertToIdentityKey(final Server server,
+  public String convertToIdentityKey(final Server server,
                                     final String sensitiveData) {
     // Generate our request-unique data. This is for debug tracking
     final String requestId = UUID.randomUUID().toString();
@@ -33,7 +34,7 @@ public class Client {
     // This blinding factor is used to blind the hashed data point before sending it to the server. The blinding process
     // ensures that the server cannot learn anything about the original data or the hashed point, as it only sees a
     // blinded version of the point.
-    final BigInteger blindingFactor = curve.randomScaler();
+    final BigInteger blindingFactor = curve.randomScalar();
 
     // Use raw UTF-8 bytes as input (RFC 9497 passes input directly to HashToGroup)
     final byte[] input = sensitiveData.getBytes(StandardCharsets.UTF_8);
@@ -76,7 +77,7 @@ public class Client {
    * @return An ECPoint on P-256.
    */
   private ECPoint hashToCurve(byte[] input) {
-    return HashToCurve.forP256().hashToCurve(input, OprfSuite.HASH_TO_GROUP_DST);
+    return hashToCurve.hashToCurve(input, OprfSuite.HASH_TO_GROUP_DST);
   }
 
 }

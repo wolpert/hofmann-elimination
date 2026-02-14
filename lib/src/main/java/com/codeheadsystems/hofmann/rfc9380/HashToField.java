@@ -1,5 +1,6 @@
 package com.codeheadsystems.hofmann.rfc9380;
 
+import com.codeheadsystems.hofmann.Curve;
 import java.math.BigInteger;
 
 /**
@@ -53,12 +54,7 @@ public class HashToField {
    * @return HashToField instance configured for P-256 field arithmetic
    */
   public static HashToField forP256() {
-    // P-256 field prime
-    BigInteger p = new BigInteger(
-        "ffffffff00000001000000000000000000000000ffffffffffffffffffffffff",
-        16
-    );
-    // L = 48 bytes (for 128-bit security with 256-bit field)
+    BigInteger p = Curve.P256_CURVE.curve().getField().getCharacteristic();
     return new HashToField(p, 48);
   }
 
@@ -69,13 +65,7 @@ public class HashToField {
    * @return HashToField instance configured for P-256 group order
    */
   public static HashToField forP256Scalar() {
-    // P-256 group order n
-    BigInteger n = new BigInteger(
-        "ffffffff00000000ffffffffffffffffbce6faada7179e84f3b9cac2fc632551",
-        16
-    );
-    // L = 48 bytes (for 128-bit security with 256-bit field)
-    return new HashToField(n, 48);
+    return new HashToField(Curve.P256_CURVE.n(), 48);
   }
 
   /**

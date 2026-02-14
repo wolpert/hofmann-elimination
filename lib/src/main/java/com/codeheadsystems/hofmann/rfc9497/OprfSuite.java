@@ -31,13 +31,11 @@ public class OprfSuite {
 
   private static byte[] buildContextString() {
     // "OPRFV1-" + 0x00 + "-P256-SHA256"
-    byte[] prefix = "OPRFV1-".getBytes(StandardCharsets.UTF_8);
-    byte[] suffix = "-P256-SHA256".getBytes(StandardCharsets.UTF_8);
-    byte[] result = new byte[prefix.length + 1 + suffix.length];
-    System.arraycopy(prefix, 0, result, 0, prefix.length);
-    result[prefix.length] = 0x00;
-    System.arraycopy(suffix, 0, result, prefix.length + 1, suffix.length);
-    return result;
+    return concat(
+        "OPRFV1-".getBytes(StandardCharsets.UTF_8),
+        new byte[]{0x00},
+        "-P256-SHA256".getBytes(StandardCharsets.UTF_8)
+    );
   }
 
   /**

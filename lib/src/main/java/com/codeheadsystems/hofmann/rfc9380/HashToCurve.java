@@ -114,6 +114,7 @@ public class HashToCurve {
       Q0 = targetCurve.createPoint(swu0[0], swu0[1]);
       Q1 = targetCurve.createPoint(swu1[0], swu1[1]);
     } else {
+      // Unreachable: the two private constructors guarantee exactly one is non-null.
       throw new IllegalStateException("HashToCurve: both isogenyMap and targetCurve are null");
     }
 

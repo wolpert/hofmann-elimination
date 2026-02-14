@@ -17,7 +17,7 @@ public class ServerImpl implements Server {
 
   public ServerImpl() {
     this.curve = Curve.P256_CURVE;
-    this.masterKey = curve.randomScaler();
+    this.masterKey = curve.randomScalar();
     this.processIdentifier = "SP:" + UUID.randomUUID();
   }
 

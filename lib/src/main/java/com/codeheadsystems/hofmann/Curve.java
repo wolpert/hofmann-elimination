@@ -2,7 +2,6 @@ package com.codeheadsystems.hofmann;
 
 import java.math.BigInteger;
 import java.security.SecureRandom;
-import java.util.function.Function;
 import org.bouncycastle.asn1.x9.X9ECParameters;
 import org.bouncycastle.crypto.ec.CustomNamedCurves;
 import org.bouncycastle.crypto.params.ECDomainParameters;
@@ -11,27 +10,25 @@ import org.bouncycastle.math.ec.ECPoint;
 
 public record Curve(ECDomainParameters params, ECCurve curve, ECPoint g, BigInteger n, BigInteger h) {
 
-  public static Curve P256_CURVE = new Curve(FACTORY().apply("P-256"));
-  public static Curve SECP256K1_CURVE = new Curve(FACTORY().apply("secp256k1"));
-  private static SecureRandom RANDOM = new SecureRandom();
+  public static final Curve P256_CURVE = loadCurve("P-256");
+  public static final Curve SECP256K1_CURVE = loadCurve("secp256k1");
+  private static final SecureRandom RANDOM = new SecureRandom();
 
   public Curve(ECDomainParameters params) {
     this(params, params.getCurve(), params.getG(), params.getN(), params.getH());
   }
 
-  static Function<String, ECDomainParameters> FACTORY() {
-    return name -> {
-      X9ECParameters params = CustomNamedCurves.getByName(name);
-      if (params == null) {
-        throw new IllegalArgumentException("Unsupported curve: " + name);
-      }
-      return new ECDomainParameters(
-          params.getCurve(),
-          params.getG(),
-          params.getN(),
-          params.getH()
-      );
-    };
+  private static Curve loadCurve(String name) {
+    X9ECParameters params = CustomNamedCurves.getByName(name);
+    if (params == null) {
+      throw new IllegalArgumentException("Unsupported curve: " + name);
+    }
+    return new Curve(new ECDomainParameters(
+        params.getCurve(),
+        params.getG(),
+        params.getN(),
+        params.getH()
+    ));
   }
 
   /**
@@ -39,7 +36,7 @@ public record Curve(ECDomainParameters params, ECCurve curve, ECPoint g, BigInte
    *
    * @return A random scalar value in the range [1, n-1].
    */
-  public BigInteger randomScaler() {
+  public BigInteger randomScalar() {
     BigInteger n = n();
     BigInteger key;
     do {
