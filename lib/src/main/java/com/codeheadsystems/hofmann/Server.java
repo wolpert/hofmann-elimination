@@ -1,5 +1,8 @@
 package com.codeheadsystems.hofmann;
 
+import com.codeheadsystems.hofmann.model.EliminationRequest;
+import com.codeheadsystems.hofmann.model.EliminationResponse;
+
 public interface Server {
 
   /**

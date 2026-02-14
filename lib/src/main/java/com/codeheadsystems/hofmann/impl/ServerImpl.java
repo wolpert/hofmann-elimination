@@ -1,9 +1,9 @@
 package com.codeheadsystems.hofmann.impl;
 
-import com.codeheadsystems.hofmann.Curve;
-import com.codeheadsystems.hofmann.EliminationRequest;
-import com.codeheadsystems.hofmann.OctetStringUtils;
-import com.codeheadsystems.hofmann.EliminationResponse;
+import com.codeheadsystems.hofmann.curve.Curve;
+import com.codeheadsystems.hofmann.model.EliminationRequest;
+import com.codeheadsystems.hofmann.curve.OctetStringUtils;
+import com.codeheadsystems.hofmann.model.EliminationResponse;
 import com.codeheadsystems.hofmann.Server;
 import java.math.BigInteger;
 import java.util.UUID;

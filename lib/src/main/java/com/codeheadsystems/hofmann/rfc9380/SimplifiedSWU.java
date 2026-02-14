@@ -1,6 +1,6 @@
 package com.codeheadsystems.hofmann.rfc9380;
 
-import com.codeheadsystems.hofmann.Curve;
+import com.codeheadsystems.hofmann.curve.Curve;
 import java.math.BigInteger;
 import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.bouncycastle.math.ec.ECCurve;

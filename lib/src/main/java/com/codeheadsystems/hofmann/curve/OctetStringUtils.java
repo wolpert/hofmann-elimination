@@ -1,4 +1,4 @@
-package com.codeheadsystems.hofmann;
+package com.codeheadsystems.hofmann.curve;
 
 import org.bouncycastle.math.ec.ECPoint;
 import org.bouncycastle.util.encoders.Hex;

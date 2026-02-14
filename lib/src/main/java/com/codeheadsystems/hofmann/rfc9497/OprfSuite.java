@@ -1,7 +1,7 @@
 package com.codeheadsystems.hofmann.rfc9497;
 
-import com.codeheadsystems.hofmann.Curve;
-import com.codeheadsystems.hofmann.OctetStringUtils;
+import com.codeheadsystems.hofmann.curve.Curve;
+import com.codeheadsystems.hofmann.curve.OctetStringUtils;
 import com.codeheadsystems.hofmann.rfc9380.HashToField;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;

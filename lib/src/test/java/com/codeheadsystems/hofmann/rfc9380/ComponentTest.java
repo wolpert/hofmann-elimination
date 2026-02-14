@@ -2,7 +2,7 @@ package com.codeheadsystems.hofmann.rfc9380;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import com.codeheadsystems.hofmann.Curve;
+import com.codeheadsystems.hofmann.curve.Curve;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import org.bouncycastle.math.ec.ECPoint;

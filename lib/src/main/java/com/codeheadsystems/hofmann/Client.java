@@ -1,5 +1,9 @@
 package com.codeheadsystems.hofmann;
 
+import com.codeheadsystems.hofmann.curve.Curve;
+import com.codeheadsystems.hofmann.curve.OctetStringUtils;
+import com.codeheadsystems.hofmann.model.EliminationRequest;
+import com.codeheadsystems.hofmann.model.EliminationResponse;
 import com.codeheadsystems.hofmann.rfc9380.HashToCurve;
 import com.codeheadsystems.hofmann.rfc9497.OprfSuite;
 import java.math.BigInteger;
@@ -27,7 +31,7 @@ public class Client {
    * @return an identity key that represents the original sensitive data after processing through the elimination protocol.
    */
   public String convertToIdentityKey(final Server server,
-                                    final String sensitiveData) {
+                                     final String sensitiveData) {
     // Generate our request-unique data. This is for debug tracking
     final String requestId = UUID.randomUUID().toString();
     // We generate a random blinding factor, which is a random scalar value mod to the points on the curve.
@@ -40,10 +44,11 @@ public class Client {
     final byte[] input = sensitiveData.getBytes(StandardCharsets.UTF_8);
 
     // Map the input bytes to a point on the P-256 curve using RFC 9497 HashToGroup DST
-    final ECPoint hashedEcPoint = hashToCurve(input);
+    final ECPoint hashedEcPoint = hashToCurve.hashToCurve(input, OprfSuite.HASH_TO_GROUP_DST);
 
-    // Blind the hashed point and convert to hex for the server.
-    final String blindedPointHex = blindEcPointToHex(hashedEcPoint, blindingFactor);
+    // We blind the EC point so the server cannot learn anything about the original data or the hashed point, as it only
+    // sees a blinded version of the point. Then convert it to hex.
+    final String blindedPointHex = OctetStringUtils.toHex(hashedEcPoint.multiply(blindingFactor).normalize());
 
     // Send the request to the server.
     final EliminationRequest eliminationRequest = new EliminationRequest(blindedPointHex, requestId);
@@ -55,29 +60,6 @@ public class Client {
     // RFC 9497 Finalize: unblind and produce the OPRF output
     final byte[] finalHash = OprfSuite.finalize(input, blindingFactor, evaluatedElement);
     return eliminationResponse.processIdentifier() + ":" + Hex.toHexString(finalHash);
-  }
-
-  /**
-   * We blind the EC point so the server cannot learn anything about the original data or the hashed point, as it only
-   * sees a blinded version of the point. Then convert it to hex.
-   *
-   * @param hashedData     The EC Point resulting from the hashing process.ex
-   * @param blindingFactor The random scalar we will use to bind the request.
-   * @return A hex-encoded string representation of the blinded EC point, which can be sent to the server for processing.
-   */
-  private String blindEcPointToHex(final ECPoint hashedData, final BigInteger blindingFactor) {
-    return OctetStringUtils.toHex(hashedData.multiply(blindingFactor).normalize());
-  }
-
-  /**
-   * Maps the input bytes to a point on P-256 using RFC 9497 HashToGroup.
-   * Uses the RFC 9497 P256-SHA256 DST for domain separation.
-   *
-   * @param input The raw input bytes to map to a curve point.
-   * @return An ECPoint on P-256.
-   */
-  private ECPoint hashToCurve(byte[] input) {
-    return hashToCurve.hashToCurve(input, OprfSuite.HASH_TO_GROUP_DST);
   }
 
 }

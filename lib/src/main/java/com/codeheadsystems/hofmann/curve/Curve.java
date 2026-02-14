@@ -1,4 +1,4 @@
-package com.codeheadsystems.hofmann;
+package com.codeheadsystems.hofmann.curve;
 
 import java.math.BigInteger;
 import java.security.SecureRandom;

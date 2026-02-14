@@ -1,6 +1,6 @@
 package com.codeheadsystems.hofmann.rfc9380;
 
-import com.codeheadsystems.hofmann.OctetStringUtils;
+import com.codeheadsystems.hofmann.curve.OctetStringUtils;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
